@@ -4,9 +4,7 @@
 
 Use Next.js route handlers as the only server runtime.
 
-Use `/api/v1/*` as the single API entrypoint. oRPC owns that entrypoint and
-falls through to the existing REST/SSE/upload handlers while those routes are
-converted procedure by procedure.
+Use `/api/v1/*` as the single API entrypoint. oRPC owns that entrypoint.
 
 Do not add tRPC. oRPC fits this app better because it has a Next route-handler
 adapter, TanStack Query utilities, native File/Blob support, event iterators,
@@ -14,8 +12,10 @@ Better Auth patterns, and OpenAPI support.
 
 ## Current Shape
 
-- `frontend/src/app/api/v1/[[...path]]/route.ts` runs the oRPC handler first,
-  then falls through to the compatibility REST/SSE/upload surface.
+- `frontend/src/app/api/v1/[[...path]]/route.ts` runs the oRPC handler.
+- Better Auth is mounted at `/api/v1/auth/*`.
+- Existing HTTP paths are matched by oRPC OpenAPI routes under
+  `frontend/src/server/rpc/router.ts`.
 - `frontend/src/server/backend/**` contains the server code that used to live in
   the separate Express service.
 - `frontend/src/server/rpc/router.ts` starts the typed API with user profile and
@@ -77,8 +77,5 @@ Reasons:
 - Express is removed.
 - `NEXT_PUBLIC_API_BASE_URL` now defaults to `/api/v1`.
 - `/api/backend` and `/rpc` are removed.
-- Keep uploads, downloads, and SSE on direct route handlers until each has a
-  typed oRPC equivalent that preserves streaming and binary behavior.
-- Move simple JSON routes to oRPC first: user, projects, workflows, chat
-  metadata, and tabular metadata.
-- Move Better Auth only after deciding the same-origin auth route shape.
+- Do not add non-oRPC API fallbacks under `/api/v1`.
+- Keep API routes on the Node.js runtime.

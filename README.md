@@ -50,7 +50,7 @@ Create `frontend/.env.local`:
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1
 DOWNLOAD_SIGNING_SECRET=replace-with-a-random-32-byte-hex-string
 BETTER_AUTH_SECRET=replace-with-a-random-32-byte-hex-string
-BETTER_AUTH_URL=http://localhost:3000/api/v1
+BETTER_AUTH_URL=http://localhost:3000/api/v1/auth
 FRONTEND_URL=http://localhost:3000
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/mike
 
