@@ -41,11 +41,15 @@ export function hasEnvApiKey(provider: ApiKeyProvider): boolean {
 }
 
 function encryptionKey(): Buffer {
+<<<<<<< HEAD:frontend/src/server/backend/lib/userApiKeys.ts
     const secret =
         process.env.USER_API_KEYS_ENCRYPTION_SECRET ||
         process.env.API_KEYS_ENCRYPTION_SECRET;
+=======
+    const secret = process.env.USER_API_KEYS_ENCRYPTION_SECRET;
+>>>>>>> upstream/main:backend/src/lib/userApiKeys.ts
     if (!secret) {
-        throw new Error("API key encryption secret is not configured");
+        throw new Error("USER_API_KEYS_ENCRYPTION_SECRET is not configured");
     }
     return crypto.createHash("sha256").update(secret).digest();
 }
