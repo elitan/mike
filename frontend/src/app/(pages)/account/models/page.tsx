@@ -39,8 +39,16 @@ const API_KEY_FIELDS = [
     },
 ] as const;
 
+const LOCAL_TABULAR_MODEL = "ollama:qwen3:4b";
+
 export default function ModelsAndApiKeysPage() {
     const { profile, updateModelPreference, updateApiKey } = useUserProfile();
+    const tabularModel = profile?.tabularModel ?? "gemini-3-flash-preview";
+    const selectedTabularModel = MODELS.find((model) => model.id === tabularModel);
+    const canUseLocalTabular = !!profile?.apiKeys.ollama.configured;
+    const isLocalTabular =
+        selectedTabularModel?.group === "Local" ||
+        tabularModel.startsWith("ollama:");
 
     return (
         <div className="space-y-4">
@@ -60,16 +68,30 @@ export default function ModelsAndApiKeysPage() {
                             We recommend using a smaller model for tabular
                             reviews to reduce token costs.
                         </p>
-                        <TabularModelDropdown
-                            value={
-                                profile?.tabularModel ??
-                                "gemini-3-flash-preview"
-                            }
-                            apiKeys={profile?.apiKeys}
-                            onChange={(id) =>
-                                updateModelPreference("tabularModel", id)
-                            }
-                        />
+                        <div className="flex gap-2">
+                            <TabularModelDropdown
+                                value={tabularModel}
+                                apiKeys={profile?.apiKeys}
+                                onChange={(id) =>
+                                    updateModelPreference("tabularModel", id)
+                                }
+                            />
+                            {canUseLocalTabular && !isLocalTabular && (
+                                <Button
+                                    type="button"
+                                    variant="outline"
+                                    className="shrink-0"
+                                    onClick={() =>
+                                        updateModelPreference(
+                                            "tabularModel",
+                                            LOCAL_TABULAR_MODEL,
+                                        )
+                                    }
+                                >
+                                    Use Ollama
+                                </Button>
+                            )}
+                        </div>
                     </div>
                 </div>
             </div>

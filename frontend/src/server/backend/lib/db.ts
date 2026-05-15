@@ -15,6 +15,8 @@ type Filter = {
   value: unknown;
 };
 
+type SelectColumns = string | string[];
+
 const pool = new Pool({
   connectionString: process.env.DATABASE_URL,
 });
@@ -32,9 +34,21 @@ function snakeCase(value: string): string {
   return value.replace(/[A-Z]/g, (char) => `_${char.toLowerCase()}`);
 }
 
+function normalizeDbValue(value: unknown): unknown {
+  if (value == null) return value;
+  if (value instanceof Date) return value;
+  if (Buffer.isBuffer(value)) return value;
+  if (Array.isArray(value)) return JSON.stringify(value);
+  if (typeof value === "object") return JSON.stringify(value);
+  return value;
+}
+
 function camelRow(row: Record<string, unknown>): Record<string, unknown> {
   return Object.fromEntries(
-    Object.entries(row).map(([key, value]) => [camelCase(key), value]),
+    Object.entries(row).map(([key, value]) => [
+      camelCase(key),
+      normalizeDbValue(value),
+    ]),
   );
 }
 
@@ -48,7 +62,8 @@ function snakeRows(rows: Record<string, unknown>[]): Record<string, unknown>[] {
   return rows.map(snakeRow);
 }
 
-function selectedColumns(columns: string): string[] | null {
+function selectedColumns(columns: SelectColumns): string[] | null {
+  if (Array.isArray(columns)) return columns.map(camelCase);
   const trimmed = columns.trim();
   if (!trimmed || trimmed === "*") return null;
   return trimmed.split(",").map((part) => camelCase(part.trim()));
@@ -108,10 +123,11 @@ function applyFilter(query: any, filter: Filter): any {
 class KyselyResultQuery<T = unknown> implements PromiseLike<DbResult<T>> {
   private action: "select" | "insert" | "update" | "delete" | "upsert" =
     "select";
-  private columns = "*";
+  private columns: SelectColumns = "*";
   private rows: Record<string, unknown>[] = [];
   private updates: Record<string, unknown> = {};
   private onConflict: string[] | null = null;
+  private ignoreDuplicates = false;
   private filters: Filter[] = [];
   private orFilters: Filter[] = [];
   private orderByClause: { column: string; ascending: boolean } | null = null;
@@ -143,7 +159,7 @@ class KyselyResultQuery<T = unknown> implements PromiseLike<DbResult<T>> {
     return this;
   }
 
-  select(columns = "*", options?: { count?: "exact"; head?: boolean }): this {
+  select(columns: SelectColumns = "*", options?: { count?: "exact"; head?: boolean }): this {
     this.columns = columns;
     this.head = options?.head ?? false;
     this.countMode = options?.count ?? null;
@@ -164,13 +180,14 @@ class KyselyResultQuery<T = unknown> implements PromiseLike<DbResult<T>> {
 
   upsert(
     rowOrRows: Record<string, unknown> | Record<string, unknown>[],
-    options?: { onConflict?: string },
+    options?: { onConflict?: string; ignoreDuplicates?: boolean },
   ): this {
     this.action = "upsert";
     this.rows = Array.isArray(rowOrRows) ? rowOrRows : [rowOrRows];
     this.onConflict = options?.onConflict
       ? options.onConflict.split(",").map((key) => camelCase(key.trim()))
       : null;
+    this.ignoreDuplicates = options?.ignoreDuplicates ?? false;
     return this;
   }
 
@@ -352,15 +369,18 @@ class KyselyResultQuery<T = unknown> implements PromiseLike<DbResult<T>> {
         const conflictKeys = this.onConflict ?? [
           Object.hasOwn(rows[0], "id") ? "id" : Object.keys(rows[0])[0],
         ];
-        query = query.onConflict((oc) =>
-          oc.columns(conflictKeys as never).doUpdateSet(
-            Object.fromEntries(
-              Object.keys(rows[0])
-                .filter((key) => !conflictKeys.includes(key))
-                .map((key) => [key, sql`excluded.${sql.ref(key)}`]),
-            ) as never,
-          ),
+        const updateValues = Object.fromEntries(
+          Object.keys(rows[0])
+            .filter((key) => !conflictKeys.includes(key))
+            .map((key) => [key, sql`excluded.${sql.ref(key)}`]),
         );
+        query = query.onConflict((oc) => {
+          const conflict = oc.columns(conflictKeys as never);
+          if (this.ignoreDuplicates || Object.keys(updateValues).length === 0) {
+            return conflict.doNothing();
+          }
+          return conflict.doUpdateSet(updateValues as never);
+        });
       }
       const result = (await query.execute()) as Record<string, unknown>[];
       if (this.wantsSingle || this.wantsMaybeSingle) {

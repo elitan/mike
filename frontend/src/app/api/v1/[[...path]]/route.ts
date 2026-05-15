@@ -3,6 +3,7 @@ import { OpenAPIHandler } from "@orpc/openapi/fetch";
 import { onError } from "@orpc/server";
 import { RPCHandler } from "@orpc/server/fetch";
 import { auth } from "@/server/backend/lib/auth";
+import { handleBackendRequest } from "@/server/backend/app";
 import { appRouter } from "@/server/rpc/router";
 
 export const runtime = "nodejs";
@@ -28,12 +29,34 @@ const openApiHandler = new OpenAPIHandler(appRouter, {
     ],
 });
 
+const backendPrefixes = [
+    "/chat",
+    "/projects",
+    "/single-documents",
+    "/tabular-review",
+    "/workflows",
+    "/user",
+    "/users",
+    "/download",
+    "/health",
+];
+
+function isBackendPath(path: string) {
+    return backendPrefixes.some(function matchesBackendPrefix(prefix) {
+        return path === prefix || path.startsWith(`${prefix}/`);
+    });
+}
+
 async function handler(request: NextRequest, context: RouteContext) {
     const params = await context.params;
     const path = `/${params.path?.join("/") ?? ""}`;
 
     if (path === "/auth" || path.startsWith("/auth/")) {
         return auth.handler(request);
+    }
+
+    if (isBackendPath(path)) {
+        return handleBackendRequest(request, path);
     }
 
     const rpcResult = await rpcHandler.handle(request.clone(), {
