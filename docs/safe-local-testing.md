@@ -21,7 +21,7 @@ keys, or real client documents for initial testing.
 Only variables prefixed with `NEXT_PUBLIC_` should be assumed safe to expose to
 the browser. Service-role keys and model-provider keys should stay server-side.
 
-For local testing, keep server secrets in `frontend/.env.local` only:
+For local testing, keep server secrets in `app/.env.local` only:
 
 ```env
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1
@@ -30,7 +30,7 @@ BETTER_AUTH_SECRET=replace-with-a-random-32-byte-hex-string
 ```
 
 Model-provider keys such as `ANTHROPIC_API_KEY`, `GEMINI_API_KEY`, and
-`OPENAI_API_KEY` should also stay in `frontend/.env.local`.
+`OPENAI_API_KEY` should also stay in `app/.env.local`.
 
 ## Test With Synthetic Documents
 

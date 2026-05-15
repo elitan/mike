@@ -12,20 +12,20 @@ Better Auth patterns, and OpenAPI support.
 
 ## Current Shape
 
-- `frontend/src/app/api/v1/[[...path]]/route.ts` runs the oRPC handler.
+- `app/src/app/api/v1/[[...path]]/route.ts` runs the oRPC handler.
 - Better Auth is mounted at `/api/v1/auth/*`.
 - Existing HTTP paths are matched by oRPC OpenAPI routes under
-  `frontend/src/server/rpc/router.ts`.
-- `frontend/src/server/backend/**` contains the server code that used to live in
+  `app/src/server/rpc/router.ts`.
+- `app/src/server/backend/**` contains the server code that used to live in
   the separate Express service.
-- `frontend/src/server/rpc/router.ts` starts the typed API with user profile and
+- `app/src/server/rpc/router.ts` starts the typed API with user profile and
   API-key status procedures.
-- `frontend/src/app/lib/orpc.ts` creates the browser oRPC client and TanStack
+- `app/src/app/lib/orpc.ts` creates the browser oRPC client and TanStack
   Query helpers.
 
 ## TanStack Query Pattern
 
-Wrap the app with `QueryClientProvider` once in `frontend/src/components/providers.tsx`.
+Wrap the app with `QueryClientProvider` once in `app/src/components/providers.tsx`.
 
 For typed oRPC reads:
 

@@ -6,7 +6,7 @@ Website: [mikeoss.com](https://mikeoss.com)
 
 ## Contents
 
-- `frontend/` - Next.js app, route handlers, oRPC, Postgres access, and document processing
+- `app/` - Next.js app, route handlers, oRPC, Postgres access, and document processing
 - `docs/db/schema.sql` - Postgres schema for fresh databases
 
 ## Prerequisites
@@ -33,7 +33,7 @@ For an existing database, do not run the full schema file over production data.
 Regenerate Kysely DB types after schema changes:
 
 ```bash
-npm run db:codegen --prefix frontend
+npm run db:codegen --prefix app
 ```
 
 ## Environment
@@ -41,10 +41,10 @@ npm run db:codegen --prefix frontend
 Create local env files:
 
 ```bash
-touch frontend/.env.local
+touch app/.env.local
 ```
 
-Create `frontend/.env.local`:
+Create `app/.env.local`:
 
 ```bash
 NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1
@@ -68,35 +68,24 @@ RESEND_API_KEY=your-resend-key
 USER_API_KEYS_ENCRYPTION_SECRET=your-long-random-secret
 ```
 
-Provider keys are only needed for the cloud models and email features you plan to use. Model provider keys can be configured in `frontend/.env.local` for the whole instance, or per user in **Account > Models & API Keys**. If a provider key is present in `frontend/.env.local`, that provider is available by default and the matching browser API key field is read-only.
+Provider keys are only needed for the cloud models and email features you plan to use. Model provider keys can be configured in `app/.env.local` for the whole instance, or per user in **Account > Models & API Keys**. If a provider key is present in `app/.env.local`, that provider is available by default and the matching browser API key field is read-only.
 
 To run fully local model inference, install Ollama, pull one of the listed models, and enable it:
 
 ```bash
-<<<<<<< HEAD
 ollama pull llama3.1
 ollama pull qwen3:8b
 ollama pull qwen3:4b
 ```
 
-Then set `OLLAMA_ENABLED=true` in `frontend/.env.local`. `OLLAMA_BASE_URL` defaults to `http://localhost:11434`.
-=======
-NEXT_PUBLIC_SUPABASE_URL=https://your-project.supabase.co
-NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY=your-supabase-anon-key
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3001
-```
-
-Supabase values come from the project dashboard. Use the project URL for `SUPABASE_URL` / `NEXT_PUBLIC_SUPABASE_URL`, the service role key for the backend `SUPABASE_SECRET_KEY`, and the anon/public key for `NEXT_PUBLIC_SUPABASE_PUBLISHABLE_DEFAULT_KEY`. If your Supabase project shows multiple key formats, use the legacy JWT-style anon and service role keys expected by the Supabase client libraries.
-
-Provider keys are only needed for the models and email features you plan to use. Model provider keys can be configured in `backend/.env` for the whole instance, or per user in **Account > Models & API Keys**. If a provider key is present in `backend/.env`, that provider is available by default and the matching browser API key field is read-only.
->>>>>>> upstream/main
+Then set `OLLAMA_ENABLED=true` in `app/.env.local`. `OLLAMA_BASE_URL` defaults to `http://localhost:11434`.
 
 ## Install
 
 Install the app package:
 
 ```bash
-npm install --prefix frontend
+npm install --prefix app
 ```
 
 ## Run Locally
@@ -104,7 +93,7 @@ npm install --prefix frontend
 Start the app:
 
 ```bash
-npm run dev --prefix frontend
+npm run dev --prefix app
 ```
 
 Open `http://localhost:3000`.
@@ -112,18 +101,18 @@ Open `http://localhost:3000`.
 ## First Run
 
 1. Sign up in the app.
-2. If you did not enable Ollama or set provider keys in `frontend/.env.local`, open **Account > Models & API Keys** and add an Anthropic, Gemini, or OpenAI API key.
+2. If you did not enable Ollama or set provider keys in `app/.env.local`, open **Account > Models & API Keys** and add an Anthropic, Gemini, or OpenAI API key.
 3. Create or open a project and start chatting with documents.
 
 ## Troubleshooting
 
-**The model picker shows a missing-key warning.** Add a key for that provider in **Account > Models & API Keys**, or configure the provider key in `frontend/.env.local` and restart Next. For Ollama, set `OLLAMA_ENABLED=true` or `OLLAMA_BASE_URL`.
+**The model picker shows a missing-key warning.** Add a key for that provider in **Account > Models & API Keys**, or configure the provider key in `app/.env.local` and restart Next. For Ollama, set `OLLAMA_ENABLED=true` or `OLLAMA_BASE_URL`.
 
 **DOC or DOCX conversion fails.** Install LibreOffice locally and restart Next so document conversion commands are available on the process path.
 
 ## Useful Checks
 
 ```bash
-npm run build --prefix frontend
-npm run lint --prefix frontend
+npm run build --prefix app
+npm run lint --prefix app
 ```

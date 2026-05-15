@@ -22,14 +22,8 @@ Thanks for helping improve Mike. Please keep contributions small, focused, and e
 
 ## Local Development
 
-Backend:
+App:
 
 ```bash
-npm run build --prefix backend
-```
-
-Frontend:
-
-```bash
-npm run build --prefix frontend
+npm run build --prefix app
 ```
