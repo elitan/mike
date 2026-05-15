@@ -7,6 +7,7 @@ import { tabularRouter } from "./routes/tabular";
 import { workflowsRouter } from "./routes/workflows";
 import { userRouter } from "./routes/user";
 import { downloadsRouter } from "./routes/downloads";
+import { auth } from "./lib/auth";
 import {
     createQuery,
     Request,
@@ -111,6 +112,10 @@ export async function handleBackendRequest(
 
     if (request.method === "GET" && normalizedPath === "/health") {
         return Response.json({ ok: true });
+    }
+
+    if (normalizedPath.startsWith("/api/auth/")) {
+        return auth.handler(request);
     }
 
     const route = mountedRoutes.find((candidate) => {

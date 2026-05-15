@@ -66,7 +66,7 @@ This app must run the API on the Node.js runtime.
 
 Reasons:
 
-- Supabase service-role access and S3/R2 signing are server-only.
+- Better Auth, Postgres access, and S3/R2 signing are server-only.
 - DOC/DOCX parsing can be CPU and memory heavy.
 - DOC/DOCX to PDF conversion uses LibreOffice.
 - Chat and tabular review streams need long-lived responses.

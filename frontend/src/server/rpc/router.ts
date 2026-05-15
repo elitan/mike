@@ -1,6 +1,6 @@
 import { ORPCError, os, type as orpcType } from "@orpc/server";
-import { createClient } from "@supabase/supabase-js";
-import { createServerSupabase } from "@/server/backend/lib/supabase";
+import { auth } from "@/server/backend/lib/auth";
+import { createServerDb } from "@/server/backend/lib/db";
 import { DEFAULT_TABULAR_MODEL, resolveModel } from "@/server/backend/lib/llm";
 import {
     getUserApiKeyStatus,
@@ -34,37 +34,18 @@ type UpdateUserProfileInput = {
 };
 
 async function requireRpcUser(request: Request): Promise<AuthedUser> {
-    const auth = request.headers.get("authorization") ?? "";
-    if (!auth.startsWith("Bearer ")) {
-        throw new ORPCError("UNAUTHORIZED", {
-            message: "Missing or invalid Authorization header",
-        });
-    }
-
-    const token = auth.slice(7).trim();
-    const supabaseUrl =
-        process.env.SUPABASE_URL ?? process.env.NEXT_PUBLIC_SUPABASE_URL ?? "";
-    const serviceKey = process.env.SUPABASE_SECRET_KEY ?? "";
-
-    if (!supabaseUrl || !serviceKey) {
-        throw new ORPCError("INTERNAL_SERVER_ERROR", {
-            message: "Server auth is not configured",
-        });
-    }
-
-    const admin = createClient(supabaseUrl, serviceKey, {
-        auth: { persistSession: false },
+    const session = await auth.api.getSession({
+        headers: request.headers,
     });
-    const { data } = await admin.auth.getUser(token);
-    if (!data.user) {
+    if (!session?.user) {
         throw new ORPCError("UNAUTHORIZED", {
             message: "Invalid or expired token",
         });
     }
 
     return {
-        id: data.user.id,
-        email: data.user.email?.toLowerCase() ?? "",
+        id: session.user.id,
+        email: session.user.email?.toLowerCase() ?? "",
     };
 }
 
@@ -129,10 +110,12 @@ function parseProfileUpdate(input: UpdateUserProfileInput) {
     return update;
 }
 
-async function ensureProfileRow(userId: string) {
-    const db = createServerSupabase();
+async function ensureProfileRow(
+    db: ReturnType<typeof createServerDb>,
+    userId: string,
+) {
     const { error } = await db
-        .from("user_profiles")
+        .insertInto("userProfiles")
         .upsert(
             { user_id: userId },
             { onConflict: "user_id", ignoreDuplicates: true },
@@ -141,15 +124,15 @@ async function ensureProfileRow(userId: string) {
 }
 
 async function loadProfile(userId: string) {
-    const db = createServerSupabase();
-    await ensureProfileRow(userId);
+    const db = createServerDb();
+    await ensureProfileRow(db, userId);
 
     const { data, error } = await db
-        .from("user_profiles")
+        .selectFrom("userProfiles")
         .select(
             "display_name, organisation, message_credits_used, credits_reset_date, tier, tabular_model",
         )
-        .eq("user_id", userId)
+        .where("userId", "=", userId)
         .single();
     if (error) throw error;
 
@@ -158,13 +141,13 @@ async function loadProfile(userId: string) {
         const creditsResetDate = new Date();
         creditsResetDate.setDate(creditsResetDate.getDate() + 30);
         const reset = await db
-            .from("user_profiles")
-            .update({
+            .updateTable("userProfiles")
+            .set({
                 message_credits_used: 0,
                 credits_reset_date: creditsResetDate.toISOString(),
                 updated_at: new Date().toISOString(),
             })
-            .eq("user_id", userId)
+            .where("userId", "=", userId)
             .select(
                 "display_name, organisation, message_credits_used, credits_reset_date, tier, tabular_model",
             )
@@ -189,18 +172,18 @@ export const appRouter = {
                 const user = await requireRpcUser(
                     (context as RpcContext).request,
                 );
-                const db = createServerSupabase();
-                await ensureProfileRow(user.id);
+                const db = createServerDb();
+                await ensureProfileRow(db, user.id);
                 const { error } = await db
-                    .from("user_profiles")
-                    .update(parseProfileUpdate(input))
-                    .eq("user_id", user.id);
+                    .updateTable("userProfiles")
+                    .set(parseProfileUpdate(input))
+                    .where("userId", "=", user.id);
                 if (error) throw error;
                 return loadProfile(user.id);
             }),
         apiKeys: os.handler(async ({ context }) => {
             const user = await requireRpcUser((context as RpcContext).request);
-            return getUserApiKeyStatus(user.id);
+            return getUserApiKeyStatus(user.id, createServerDb());
         }),
     },
 };
