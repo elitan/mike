@@ -4,9 +4,9 @@
 
 Use Next.js route handlers as the only server runtime.
 
-Keep REST paths for the existing app surface under `/api/backend/*` so uploads,
-downloads, and SSE streams keep their current behavior. Use oRPC for typed JSON
-routes going forward.
+Use `/api/v1/*` as the single API entrypoint. oRPC owns that entrypoint and
+falls through to the existing REST/SSE/upload handlers while those routes are
+converted procedure by procedure.
 
 Do not add tRPC. oRPC fits this app better because it has a Next route-handler
 adapter, TanStack Query utilities, native File/Blob support, event iterators,
@@ -14,11 +14,10 @@ Better Auth patterns, and OpenAPI support.
 
 ## Current Shape
 
-- `frontend/src/app/api/backend/[[...path]]/route.ts` mounts the old REST API
-  surface in Next.
+- `frontend/src/app/api/v1/[[...path]]/route.ts` runs the oRPC handler first,
+  then falls through to the compatibility REST/SSE/upload surface.
 - `frontend/src/server/backend/**` contains the server code that used to live in
   the separate Express service.
-- `frontend/src/app/rpc/[[...rest]]/route.ts` mounts oRPC.
 - `frontend/src/server/rpc/router.ts` starts the typed API with user profile and
   API-key status procedures.
 - `frontend/src/app/lib/orpc.ts` creates the browser oRPC client and TanStack
@@ -76,7 +75,8 @@ Reasons:
 ## Migration Notes
 
 - Express is removed.
-- `NEXT_PUBLIC_API_BASE_URL` now defaults to `/api/backend`.
+- `NEXT_PUBLIC_API_BASE_URL` now defaults to `/api/v1`.
+- `/api/backend` and `/rpc` are removed.
 - Keep uploads, downloads, and SSE on direct route handlers until each has a
   typed oRPC equivalent that preserves streaming and binary behavior.
 - Move simple JSON routes to oRPC first: user, projects, workflows, chat

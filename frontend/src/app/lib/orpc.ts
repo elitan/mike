@@ -7,7 +7,7 @@ import type { RouterClient } from "@orpc/server";
 import type { appRouter } from "@/server/rpc/router";
 
 const link = new RPCLink({
-    url: "/rpc",
+    url: "/api/v1",
 });
 
 export const orpcClient: RouterClient<typeof appRouter> =

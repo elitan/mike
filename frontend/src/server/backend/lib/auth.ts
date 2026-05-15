@@ -5,7 +5,7 @@ export const auth = betterAuth({
   baseURL:
     process.env.BETTER_AUTH_URL ??
     process.env.NEXT_PUBLIC_API_BASE_URL ??
-    "http://localhost:3000/api/backend",
+    "http://localhost:3000/api/v1",
   secret:
     process.env.BETTER_AUTH_SECRET ??
     "local-build-secret-change-me-please-32-chars",

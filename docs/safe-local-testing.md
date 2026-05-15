@@ -24,7 +24,7 @@ the browser. Service-role keys and model-provider keys should stay server-side.
 For local testing, keep server secrets in `frontend/.env.local` only:
 
 ```env
-NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/backend
+NEXT_PUBLIC_API_BASE_URL=http://localhost:3000/api/v1
 DATABASE_URL=postgres://postgres:postgres@localhost:5432/mike
 BETTER_AUTH_SECRET=replace-with-a-random-32-byte-hex-string
 ```
